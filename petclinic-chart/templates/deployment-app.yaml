@@ -19,6 +19,10 @@ spec:
         app: {{ .Values.labels.app }}
         release: {{ .Release.Name }}
     spec:
+      initContainers:
+      - name: check-db-ready
+        image: busybox:1.28
+        command: ['sh', '-c', 'until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;']
       containers:
       - name: petclinic
         image: {{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}
@@ -53,6 +57,7 @@ spec:
           httpGet:
             path: /actuator/health
             port: {{ .Values.app.env.serverPort }}
-          failureThreshold: 30
+          initialDelaySeconds: 60
           periodSeconds: 10
+          failureThreshold: 30
 {{- end }}
