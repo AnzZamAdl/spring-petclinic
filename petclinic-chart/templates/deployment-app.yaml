@@ -1,17 +1,23 @@
+{{- if not .Values.mysql.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: petclinic-app
   namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.labels.app }}
+    release: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.app.replicas }}
   selector:
     matchLabels:
       app: {{ .Values.labels.app }}
+      release: {{ .Release.Name }}
   template:
     metadata:
       labels:
         app: {{ .Values.labels.app }}
+        release: {{ .Release.Name }}
     spec:
       containers:
       - name: petclinic
@@ -41,3 +47,4 @@ spec:
             configMapKeyRef:
               name: app-config
               key: MYSQL_DATABASE
+{{- end }}
