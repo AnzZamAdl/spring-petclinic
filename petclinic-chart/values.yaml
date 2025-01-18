@@ -17,7 +17,7 @@ mysql:
 # PetClinic application configurations
 app:
   image:
-    repository: 905418425077.dkr.ecr.ap-south-1.amazonaws.com/dev/petclinic
+    repository: 017820683847.dkr.ecr.us-east-1.amazonaws.com/petclinic-dev
     tag: latest
   replicas: 2
   service:
