@@ -19,6 +19,10 @@ spec:
         app: {{ .Values.labels.app }}
         release: {{ .Release.Name }}
     spec:
+      initContainers:
+      - name: wait-for-mysql
+        image: busybox:1.28
+        command: ['sh', '-c', 'until nslookup mysql-service.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mysql; sleep 2; done;']
       containers:
       - name: petclinic
         image: {{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}
@@ -49,26 +53,22 @@ spec:
               key: MYSQL_DATABASE
         - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
           value: "com.mysql.cj.jdbc.Driver"
-        - name: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
-          value: "5"
-        - name: SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE
-          value: "2"
-        - name: SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
-          value: "20000"
-        - name: SPRING_DATASOURCE_HIKARI_IDLE_TIMEOUT
-          value: "300000"
+        - name: SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT
+          value: "org.hibernate.dialect.MySQL8Dialect"
+        - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+          value: "update"
         readinessProbe:
           httpGet:
             path: /actuator/health
             port: {{ .Values.app.env.serverPort }}
-          initialDelaySeconds: 90
+          initialDelaySeconds: 120
           periodSeconds: 15
           timeoutSeconds: 10
         livenessProbe:
           httpGet:
             path: /actuator/health
             port: {{ .Values.app.env.serverPort }}
-          initialDelaySeconds: 90
+          initialDelaySeconds: 120
           periodSeconds: 15
           timeoutSeconds: 10
 {{- end }}
