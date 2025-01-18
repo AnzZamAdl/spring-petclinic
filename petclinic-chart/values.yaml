@@ -1,0 +1,33 @@
+# Common configurations
+namespace: dev
+
+# MySQL configurations
+mysql:
+  image: mysql:8.4
+  username: petclinic
+  password: petclinic
+  rootPassword: root
+  database: petclinic
+  storage:
+    size: 8Gi
+  service:
+    type: ClusterIP
+    port: 3306
+
+# PetClinic application configurations
+app:
+  image:
+    repository: 905418425077.dkr.ecr.ap-south-1.amazonaws.com/dev/petclinic
+    tag: latest
+  replicas: 2
+  service:
+    type: LoadBalancer
+    port: 8081
+  env:
+    serverPort: 8081
+    mysqlUrl: jdbc:mysql://mysql-service:3306/petclinic
+
+# Kubernetes labels
+labels:
+  app: petclinic
+  db: mysql
