@@ -84,12 +84,16 @@
       <artifactId>spring-boot-testcontainers</artifactId> <!-- Testcontainers integration with Spring Boot -->
       <scope>test</scope>
     </dependency>
-
+    <dependency>
+    <groupId>org.apache.tomcat.embed</groupId>
+    <artifactId>tomcat-embed-core</artifactId>
+    <version>10.1.34</version>
+    </dependency>
     <!-- Security update: Fixed vulnerability for spring-webmvc -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-webmvc</artifactId>
-      <version>6.1.13</version> <!-- This mitigates CVE-2024-38816 -->
+      <version>6.1.14</version> <!-- This mitigates CVE-2024-38816 -->
     </dependency>
 
     <!-- Caching Libraries -->
