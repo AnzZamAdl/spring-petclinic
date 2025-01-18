@@ -24,6 +24,18 @@ spec:
         image: {{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}
         ports:
         - containerPort: {{ .Values.app.env.serverPort }}
+        startupProbe:
+          httpGet:
+            path: /actuator/health
+            port: {{ .Values.app.env.serverPort }}
+          failureThreshold: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: {{ .Values.app.env.serverPort }}
+          initialDelaySeconds: 60
+          periodSeconds: 10
         env:
         - name: SERVER_PORT
           value: "{{ .Values.app.env.serverPort }}"
@@ -47,4 +59,19 @@ spec:
             configMapKeyRef:
               name: app-config
               key: MYSQL_DATABASE
+        - name: SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT
+          value: "60000"
+        - name: SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT
+          value: "30000"
+        - name: SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE
+          value: "5"
+        - name: SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE
+          value: "2"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
 {{- end }}
