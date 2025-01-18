@@ -13,7 +13,7 @@ pipeline {
         TRIVY_PAT_CREDENTIALS_ID = 'github-pat'
         
         // SonarQube settings
-        SONARQUBE_HOST_URL = 'http://44.201.120.105:9000/'  // Replace with your SonarQube URL
+        SONARQUBE_HOST_URL = 'http://3.92.82.78:9000/'  // Replace with your SonarQube URL
         SONARQUBE_PROJECT_KEY = 'PetClinic'
         SONARQUBE_TOKEN = credentials('sonar-credentials')  // Ensure this matches your credentials
         
