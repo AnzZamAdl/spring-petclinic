@@ -24,10 +24,10 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: kubernetes.io/hostname
+                  - key: topology.kubernetes.io/zone
                     operator: In
                     values:
-                      - {{ .Values.mysql.nodeSelector }}
+                      - us-east-1b
       containers:
       - name: mysql
         image: {{ .Values.mysql.image }}
