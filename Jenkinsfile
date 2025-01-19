@@ -2,38 +2,31 @@ pipeline {
     agent any
 
     tools {
-        jdk 'JDK 17'  
-        maven 'maven 3.9.8'  
+        jdk 'JDK 17'
+        maven 'maven 3.9.8'
     }
 
     environment {
-        GIT_REPO = 'https://github.com/SubbuTechTutorials/spring-petclinic.git'
+        GIT_REPO = 'https://github.com/SubbuTechOps/spring-petclinic.git'
         GIT_BRANCH = 'develop'
-        GIT_CREDENTIALS_ID = 'github-credentials'
-        TRIVY_PAT_CREDENTIALS_ID = 'github-pat'
-        
-        // SonarQube settings
-        SONARQUBE_HOST_URL = 'http://3.92.82.78:9000/'  // Replace with your SonarQube URL
+        GIT_CREDENTIALS_ID = 'github-pat'
+
+        SONARQUBE_HOST_URL = 'http://3.92.82.78:9000/'
         SONARQUBE_PROJECT_KEY = 'PetClinic'
-        SONARQUBE_TOKEN = credentials('sonar-credentials')  // Ensure this matches your credentials
-        
-        AWS_ACCOUNT_ID = '905418425077'
-        ECR_REPO_URL = '905418425077.dkr.ecr.ap-south-1.amazonaws.com/dev/petclinic'
-        AWS_REGION_ECR = 'ap-south-1'
-        
-        // EKS Cluster name and region
-        EKS_CLUSTER_NAME = 'devops-petclinicapp-dev-ap-south-1'
-        AWS_REGION_EKS = 'ap-south-1'
-        
-        // Set local directory to cache Trivy DB
+        SONARQUBE_TOKEN = credentials('sonar-credentials')
+
+        AWS_ACCOUNT_ID = '017820683847'
+        ECR_REPO_URL = '017820683847.dkr.ecr.us-east-1.amazonaws.com/petclinic-dev'
+        AWS_REGION = 'us-east-1'
+
+        EKS_CLUSTER_NAME = 'demo-cluster'
+        HELM_RELEASE_NAME = 'petclinic'
+        MYSQL_RELEASE_NAME = 'mysql'
+        HELM_NAMESPACE = 'petclinic-dev'
+        MYSQL_NAMESPACE = 'mysql-dev'
+        HELM_RELEASE_NAME_DB = 'mysql-release'
+
         TRIVY_DB_CACHE = "/var/lib/jenkins/trivy-db"
-
-        // Slack environment variables
-        SLACK_CHANNEL = '#project-petclinic'  // Replace with your Slack channel
-    }
-
-    options {
-        skipStagesAfterUnstable()  // Skip stages if a previous stage fails
     }
 
     stages {
@@ -46,231 +39,139 @@ pipeline {
 
         stage('Trivy Scan Repository') {
             steps {
-                script {
-                    if (!fileExists('trivy-scan-success')) {
-                        sh "mkdir -p ${TRIVY_DB_CACHE}"
-                        withCredentials([string(credentialsId: "${TRIVY_PAT_CREDENTIALS_ID}", variable: 'GITHUB_TOKEN')]) {
-                            def dbAge = sh(script: "find ${TRIVY_DB_CACHE} -name 'db.lock' -mtime +7 | wc -l", returnStdout: true).trim()
-                            if (dbAge != '1') {
-                                sh "trivy fs --cache-dir ${TRIVY_DB_CACHE} --exit-code 1 --severity HIGH,CRITICAL --token $GITHUB_TOKEN ."
-                            } else {
-                                sh "trivy fs --cache-dir ${TRIVY_DB_CACHE} --skip-db-update --exit-code 1 --severity HIGH,CRITICAL ."
-                            }
-                        }
-                        writeFile file: 'trivy-scan-success', text: ''
-                    }
-                }
+                sh """
+                mkdir -p ${TRIVY_DB_CACHE}
+                trivy fs --cache-dir ${TRIVY_DB_CACHE} --exit-code 1 --severity HIGH,CRITICAL .
+                """
             }
         }
 
         stage('Run Unit Tests') {
             steps {
-                script {
-                    if (!fileExists('unit-tests-success')) {
-                        sh 'mvn test -DskipTests=false'
-                        writeFile file: 'unit-tests-success', text: ''
-                    }
-                }
+                sh 'mvn test -DskipTests=false'
             }
         }
 
         stage('Generate JaCoCo Coverage Report') {
             steps {
-                script {
-                    if (!fileExists('jacoco-report-success')) {
-                        sh 'mvn jacoco:report'
-                        writeFile file: 'jacoco-report-success', text: ''
-                    }
-                }
+                sh 'mvn jacoco:report'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                script {
-                    if (!fileExists('sonarqube-analysis-success')) {
-                        withSonarQubeEnv('SonarQube') {
-                            sh """
-                            mvn clean verify sonar:sonar \
-                            -Dsonar.projectKey=${SONARQUBE_PROJECT_KEY} \
-                            -Dsonar.host.url=${SONARQUBE_HOST_URL} \
-                            -Dsonar.login=${SONARQUBE_TOKEN}
-                            """
-                        }
-                        writeFile file: 'sonarqube-analysis-success', text: ''
-                    }
-                }
-            }
-        }
-        
-         stage('Build Docker Image') {
-            steps {
-                script {
-                    if (!fileExists('docker-build-success')) {
-                        def COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                        def IMAGE_TAG = "${COMMIT_HASH}-${BUILD_NUMBER}"
-                        env.DOCKER_IMAGE = "${ECR_REPO_URL}:${IMAGE_TAG}"
-
-                        if (!env.DOCKER_IMAGE) {
-                            error "Failed to set DOCKER_IMAGE."
-                        }
-                        echo "DOCKER_IMAGE: ${env.DOCKER_IMAGE}"
-
-                        sh 'docker build -t $DOCKER_IMAGE . --progress=plain'
-                        writeFile file: 'docker-build-success', text: ''
-                    }
-                }
-            }
-        }
-        
-         stage('Push Docker Image to AWS ECR') {
-            steps {
-                script {
-                    if (!fileExists('docker-push-success')) {
-                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-eks-credentials']]) {
-                            sh """
-                            aws ecr get-login-password --region ${AWS_REGION_ECR} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION_ECR}.amazonaws.com
-                            docker push ${env.DOCKER_IMAGE}
-                            """
-                        }
-                        writeFile file: 'docker-push-success', text: ''
-                    }
-                }
-            }
-        }
-        
-
-stage('Deploy MySQL to EKS') {
-    steps {
-        script {
-            def mysqlDeploymentExists = sh(script: "kubectl get deployment -n dev mysql-db", returnStatus: true) == 0
-
-            if (!mysqlDeploymentExists) {
-                unstash 'source-code'  // Unstash the source code, which includes your local YAML files
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-eks-credentials']]) {
+                withSonarQubeEnv('SonarQube') {
                     sh """
-                    aws configure set region ${AWS_REGION_EKS}
-                    aws eks --region ${AWS_REGION_EKS} update-kubeconfig --name ${EKS_CLUSTER_NAME}
-                    """
-                    // Apply the correct MySQL service and deployment YAML files from the local workspace
-                    sh """
-                        kubectl apply -f k8s/mysql-service.yaml
-                        kubectl apply -f k8s/mysql-deployment.yaml 
+                    mvn sonar:sonar \
+                    -Dsonar.projectKey=${SONARQUBE_PROJECT_KEY} \
+                    -Dsonar.host.url=${SONARQUBE_HOST_URL} \
+                    -Dsonar.login=${SONARQUBE_TOKEN}
                     """
                 }
-            } else {
-                echo "MySQL Deployment already exists."
             }
         }
-    }
-}
 
-        stage('Check MySQL Readiness') {
+        stage('Build and Push Docker Image') {
             steps {
                 script {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-eks-credentials']]) {
-                        sh """
-                        aws configure set region ${AWS_REGION_EKS}
-                        aws eks --region ${AWS_REGION_EKS} update-kubeconfig --name ${EKS_CLUSTER_NAME}
-                        """
-                        
-                        def maxRetries = 10
-                        def retryInterval = 30
-                        def isMySQLReady = 'false'
+                    def COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    env.IMAGE_TAG = "${COMMIT_HASH}-${BUILD_NUMBER}"
+                    env.DOCKER_IMAGE = "${ECR_REPO_URL}:${IMAGE_TAG}"
 
-                        for (int i = 0; i < maxRetries; i++) {
-                            echo "Checking MySQL readiness (Attempt ${i + 1}/${maxRetries})..."
-                            isMySQLReady = sh(script: "kubectl get pod -n dev -l app=mysql -o jsonpath='{.items[0].status.containerStatuses[0].ready}'", returnStdout: true).trim()
-                            if (isMySQLReady == 'true') {
-                                echo 'MySQL service is ready. Proceeding with PetClinic deployment.'
-                                break
-                            } else {
-                                echo "MySQL service is not ready. Waiting ${retryInterval} seconds before checking again..."
-                                sleep retryInterval
-                            }
-                        }
-
-                        if (isMySQLReady != 'true') {
-                            error('MySQL service is still not ready after multiple attempts. Exiting deployment.')
-                        }
-                    }
+                    sh """
+                    docker build -t ${DOCKER_IMAGE} .
+                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URL}
+                    docker push ${DOCKER_IMAGE}
+                    """
                 }
             }
         }
 
-       stage('Deploy PetClinic to EKS') {
-    steps {
-        script {
-            unstash 'source-code'  // Ensure the source code is available, including your YAML files
-            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-eks-credentials']]) {
-                // List the contents of the k8s directory to verify the files are present
-                sh 'ls -l k8s/'
-
-                // Use sed to update the image in the petclinic-deployment.yaml file
-                sh "sed -i 's|image: .*|image: ${env.DOCKER_IMAGE}|' k8s/petclinic-deployment.yaml"
-                
+        stage('Trivy Scan Docker Image') {
+            steps {
                 sh """
-                aws configure set region ${AWS_REGION_EKS}
-                aws eks --region ${AWS_REGION_EKS} update-kubeconfig --name ${EKS_CLUSTER_NAME}
+                trivy image --exit-code 1 --severity HIGH,CRITICAL ${DOCKER_IMAGE}
                 """
-                // Apply the correct PetClinic deployment and service YAML files from the local workspace
+            }
+        }
+        
+    stage('Install/Upgrade MySQL') {
+    steps {
+        script {
+            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-access']]) {
                 sh """
-                    kubectl apply -f k8s/petclinic-deployment.yaml  
-                    kubectl apply -f k8s/petclinic-service.yaml  
+                    aws eks update-kubeconfig --region ${AWS_REGION} --name ${EKS_CLUSTER_NAME}
+                    
+                    # Delete existing deployments
+                    kubectl delete deployment mysql-db -n ${HELM_NAMESPACE} || true
+                    kubectl delete deployment petclinic-app -n ${HELM_NAMESPACE} || true
+                    
+                    helm upgrade --install mysql-release ./petclinic-chart \
+                        --namespace ${HELM_NAMESPACE} \
+                        --create-namespace \
+                        -f ./petclinic-chart/values.yaml \
+                        --set app.enabled=false \
+                        --set mysql.enabled=true
                 """
             }
         }
     }
 }
 
-        stage('Check PetClinic Health') {
-            steps {
-                script {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-eks-credentials']]) {
-                        sh """
-                        aws configure set region ${AWS_REGION_EKS}
-                        aws eks --region ${AWS_REGION_EKS} update-kubeconfig --name ${EKS_CLUSTER_NAME}
-                        """
-                        
-                        def maxRetries = 10
-                        def retryInterval = 30
-                        def isPetClinicReady = 'false'
-
-                        for (int i = 0; i < maxRetries; i++) {
-                            echo "Checking PetClinic health (Attempt ${i + 1}/${maxRetries})..."
-                            def petclinicPodStatus = sh(script: "kubectl get pod -n dev -l app=petclinic -o jsonpath='{.items[0].status.phase}'", returnStdout: true).trim()
-                            if (petclinicPodStatus == 'Running') {
-                                echo 'PetClinic application is healthy.'
-                                isPetClinicReady = 'true'
-                                break
-                            } else {
-                                echo "PetClinic application is not ready yet. Waiting ${retryInterval} seconds before checking again..."
-                                sleep retryInterval
-                            }
-                        }
-
-                        if (isPetClinicReady != 'true') {
-                            error('PetClinic application did not become healthy after multiple attempts.')
-                        }
-                    }
-                }
+stage('Check MySQL Health') {
+    steps {
+        script {
+            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-access']]) {
+                sh """
+                    aws eks update-kubeconfig --region ${AWS_REGION} --name ${EKS_CLUSTER_NAME}
+                    kubectl wait --namespace ${HELM_NAMESPACE} --for=condition=ready pod -l app=mysql --timeout=300s
+                """
             }
         }
+    }
+}
+
+stage('Deploy PetClinic Application') {
+    steps {
+        script {
+            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-access']]) {
+                sh """
+                    aws eks update-kubeconfig --region ${AWS_REGION} --name ${EKS_CLUSTER_NAME}
+                     # Delete existing service
+                    kubectl delete service petclinic-service -n ${HELM_NAMESPACE} || true
+                    helm upgrade --install petclinic ./petclinic-chart \
+                        --namespace ${HELM_NAMESPACE} \
+                        -f ./petclinic-chart/values.yaml \
+                        --set app.image.tag=${IMAGE_TAG} \
+                        --set mysql.enabled=false
+                """
+            }
+        }
+    }
+}
+    
+stage('Check PetClinic Health') {
+    steps {
+        script {
+            withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-access']]) {
+                sh """
+                    aws eks update-kubeconfig --region ${AWS_REGION} --name ${EKS_CLUSTER_NAME}
+                    kubectl wait --namespace ${HELM_NAMESPACE} --for=condition=ready pod -l app=petclinic --timeout=300s
+                """
+            }
+        }
+    }
+}
+       
     }
 
     post {
         always {
-            cleanWs()  // Clean up the workspace after the build
-        }
-        
-        success {
-            slackSend(channel: '#project-petclinic', color: 'good', message: "SUCCESS: Job '${env.JOB_NAME}' build #${currentBuild.number} succeeded.")
-        }
-        failure {
-            slackSend(channel: '#project-petclinic', color: 'danger', message: "FAILURE: Job '${env.JOB_NAME}' build #${currentBuild.number} failed.")
-        }
-        unstable {
-            slackSend(channel: '#project-petclinic', color: 'warning', message: "UNSTABLE: Job '${env.JOB_NAME}' build #${currentBuild.number} is unstable.")
+            cleanWs()
+            sh """
+            docker image prune -f
+            docker container prune -f
+            """
         }
     }
 }
