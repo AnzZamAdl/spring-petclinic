@@ -56,10 +56,9 @@ spec:
         readinessProbe:
           exec:
             command:
-            - "mysqladmin"
-            - "ping"
-            - "-u${MYSQL_USER}"
-            - "-p${MYSQL_PASSWORD}"
+            - "sh"
+            - "-c"
+            - "mysqladmin ping -h 127.0.0.1 -u$(MYSQL_USER) -p$(MYSQL_PASSWORD)"
           initialDelaySeconds: 10
           periodSeconds: 5
       volumes:
