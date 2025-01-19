@@ -11,6 +11,8 @@ mysql:
     port: 3306
   storage:
     size: 8Gi
+    className: manual
+  nodeSelector: ip-192-168-208-185.ec2.internal # Node in the same AZ as the EBS volume
 
 app:
   image:
