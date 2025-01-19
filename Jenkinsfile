@@ -102,16 +102,18 @@ pipeline {
                 sh """
                     aws eks update-kubeconfig --region ${AWS_REGION} --name ${EKS_CLUSTER_NAME}
                     
-                    # Delete existing deployments
-                    kubectl delete deployment mysql-db -n ${HELM_NAMESPACE} || true
-                    kubectl delete deployment petclinic-app -n ${HELM_NAMESPACE} || true
-                    
-                    helm upgrade --install mysql-release ./petclinic-chart \
-                        --namespace ${HELM_NAMESPACE} \
-                        --create-namespace \
-                        -f ./petclinic-chart/values.yaml \
-                        --set app.enabled=false \
-                        --set mysql.enabled=true
+                    # Check if MySQL deployment exists and is running
+                    if ! kubectl get deployment mysql-db -n ${HELM_NAMESPACE} > /dev/null 2>&1; then
+                        echo "MySQL deployment not found. Installing..."
+                        helm upgrade --install mysql-release ./petclinic-chart \
+                            --namespace ${HELM_NAMESPACE} \
+                            --create-namespace \
+                            -f ./petclinic-chart/values.yaml \
+                            --set app.enabled=false \
+                            --set mysql.enabled=true
+                    else
+                        echo "MySQL deployment already exists and running. Skipping deployment."
+                    fi
                 """
             }
         }
@@ -137,19 +139,26 @@ stage('Deploy PetClinic Application') {
             withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-access']]) {
                 sh """
                     aws eks update-kubeconfig --region ${AWS_REGION} --name ${EKS_CLUSTER_NAME}
-                     # Delete existing service
-                    kubectl delete service petclinic-service -n ${HELM_NAMESPACE} || true
-                    helm upgrade --install petclinic ./petclinic-chart \
-                        --namespace ${HELM_NAMESPACE} \
-                        -f ./petclinic-chart/values.yaml \
-                        --set app.image.tag=${IMAGE_TAG} \
-                        --set mysql.enabled=false
+                    
+                    # Get current image tag from deployment if it exists
+                    CURRENT_TAG=\$(kubectl get deployment petclinic -n ${HELM_NAMESPACE} -o jsonpath='{.spec.template.spec.containers[0].image}' 2>/dev/null | cut -d ':' -f2 || echo "")
+                    
+                    if [ "\$CURRENT_TAG" != "${IMAGE_TAG}" ]; then
+                        echo "New version detected (Current: \$CURRENT_TAG, New: ${IMAGE_TAG}). Deploying updates..."
+                        helm upgrade --install petclinic ./petclinic-chart \
+                            --namespace ${HELM_NAMESPACE} \
+                            -f ./petclinic-chart/values.yaml \
+                            --set app.image.tag=${IMAGE_TAG} \
+                            --set mysql.enabled=false
+                    else
+                        echo "Application is already running with the latest version (${IMAGE_TAG}). Skipping deployment."
+                    fi
                 """
             }
         }
     }
 }
-    
+
 stage('Check PetClinic Health') {
     steps {
         script {
