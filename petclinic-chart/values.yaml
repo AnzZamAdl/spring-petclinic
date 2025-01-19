@@ -1,6 +1,6 @@
 namespace: petclinic-dev
-
 mysql:
+  enabled: true  # Added this to control the conditional creation
   image: mysql:8.4
   username: petclinic
   password: petclinic
@@ -12,8 +12,8 @@ mysql:
   storage:
     size: 8Gi
     className: manual
-  nodeSelector: ip-192-168-208-185.ec2.internal # Node in the same AZ as the EBS volume
-
+  # Removed nodeSelector since we're now using zone-based affinity in the deployment template
+  # The zone affinity is hardcoded in the deployment template to us-east-1b
 app:
   image:
     repository: 017820683847.dkr.ecr.us-east-1.amazonaws.com/petclinic-dev
@@ -25,7 +25,6 @@ app:
   env:
     serverPort: 8081
     mysqlUrl: jdbc:mysql://mysql-service:3306/petclinic
-
 labels:
   app: petclinic
   db: mysql
