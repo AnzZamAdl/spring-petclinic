@@ -48,6 +48,20 @@ spec:
         volumeMounts:
         - name: mysql-persistent-storage
           mountPath: /var/lib/mysql
+        livenessProbe:
+          tcpSocket:
+            port: {{ .Values.mysql.service.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - "mysqladmin"
+            - "ping"
+            - "-u${MYSQL_USER}"
+            - "-p${MYSQL_PASSWORD}"
+          initialDelaySeconds: 10
+          periodSeconds: 5
       volumes:
       - name: mysql-persistent-storage
         persistentVolumeClaim:
