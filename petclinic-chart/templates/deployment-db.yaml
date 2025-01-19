@@ -19,6 +19,8 @@ spec:
         app: {{ .Values.labels.db }}
         release: {{ .Release.Name }}
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: {{ .Values.mysql.nodeSelector }}
       containers:
       - name: mysql
         image: {{ .Values.mysql.image }}
