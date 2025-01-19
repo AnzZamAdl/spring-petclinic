@@ -22,7 +22,7 @@ spec:
       initContainers:
       - name: check-db-ready
         image: busybox:1.28
-        command: ['sh', '-c', 'echo "Checking MySQL readiness"; until nc -z mysql-service 3306; do echo "Waiting for MySQL..."; sleep 2; done; echo "MySQL is ready";']
+        command: ['sh', '-c', 'echo "Checking MySQL readiness"; until nc -z mysql-service 3306; do echo "Waiting for MySQL..."; sleep 5; done; echo "MySQL is ready";']
         timeoutSeconds: 300
       containers:
       - name: petclinic
