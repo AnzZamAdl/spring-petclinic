@@ -22,7 +22,8 @@ spec:
       initContainers:
       - name: check-db-ready
         image: busybox:1.28
-        command: ['sh', '-c', 'until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;']
+        command: ['sh', '-c', 'echo "Checking MySQL readiness"; until nc -z mysql-service 3306; do echo "Waiting for MySQL..."; sleep 2; done; echo "MySQL is ready";']
+        timeoutSeconds: 300
       containers:
       - name: petclinic
         image: {{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}
@@ -57,7 +58,21 @@ spec:
           httpGet:
             path: /actuator/health
             port: {{ .Values.app.env.serverPort }}
-          initialDelaySeconds: 60
+          initialDelaySeconds: 90
           periodSeconds: 10
-          failureThreshold: 30
+          failureThreshold: 15
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: {{ .Values.app.env.serverPort }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: {{ .Values.app.env.serverPort }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
 {{- end }}
