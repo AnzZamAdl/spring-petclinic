@@ -19,8 +19,15 @@ spec:
         app: {{ .Values.labels.db }}
         release: {{ .Release.Name }}
     spec:
-      nodeSelector:
-        kubernetes.io/hostname: {{ .Values.mysql.nodeSelector }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - {{ .Values.mysql.nodeSelector }}
       containers:
       - name: mysql
         image: {{ .Values.mysql.image }}
@@ -63,6 +70,13 @@ spec:
             - "mysqladmin ping -h 127.0.0.1 -u$(MYSQL_USER) -p$(MYSQL_PASSWORD)"
           initialDelaySeconds: 10
           periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
       volumes:
       - name: mysql-persistent-storage
         persistentVolumeClaim:
