@@ -41,10 +41,9 @@ Or you can run it from Maven directly using the Spring Boot Maven plugin. If you
 - [6. Tools and Plugins Configuration](#6-tools-and-plugins-configuration)
 - [7. Kubernetes Configuration](#7-kubernetes-configuration)
 - [8. Helm Charts](#8-helm-charts)
-- [9. MySQL Deployment](#9-mysql-deployment)
-- [10. CI/CD Pipeline](#10-cicd-pipeline)
-- [11. Post-deployment Verification](#11-post-deployment-verification)
-- [12. Troubleshooting Guide](#12-troubleshooting-guide)
+- [9. CI/CD Pipeline](#9-cicd-pipeline)
+- [10. Post-deployment Verification](#10-post-deployment-verification)
+- [11. Troubleshooting Guide](#11-troubleshooting-guide)
 
 ## Prerequisites
 - AWS Account with appropriate permissions
@@ -383,74 +382,37 @@ spec:
     fsType: ext4
 ```
 **Note:**
-#### Guide: Setting Up EBS Volumes for Kubernetes PersistentVolumes
+### Guide: Setting Up EBS Volumes for Kubernetes PersistentVolumes
 [EBS Volume Setup Guide](https://github.com/SubbuTechOps/storages-guide/blob/main/EBS/ebs-pv-guide.md)
+
 ---
 
 ## 8. Helm Charts
-### Create Helm Chart Structure
-```bash
-helm create petclinic
+
+### Directory Structure
+```
+petclinic-chart/
+├── templates/
+│   ├── deployment-app.yaml
+│   ├── deployment-db.yaml
+│   ├── pvc.yaml
+│   ├── service-app.yaml
+│   └── service-db.yaml
+├── Chart.yaml
+└── values.yaml
 ```
 
-### Update values.yaml
-```yaml
-# petclinic/values.yaml
-image:
-  repository: your-docker-hub-username/spring-petclinic
-  tag: latest
-  pullPolicy: Always
+#### Check the following directory for all charts used in the project:
 
-service:
-  type: LoadBalancer
-  port: 8080
+🗂️ Petclinic Chart Directory - Contains main chart configuration and values
+📑 Templates Directory - Contains Kubernetes manifests and service definitions
 
-resources:
-  limits:
-    cpu: 1000m
-    memory: 1024Mi
-  requests:
-    cpu: 500m
-    memory: 512Mi
-
-configMap:
-  name: petclinic-config
-```
+[Petclinic Chart Directory](/spring-petclinic/petclinic-chart/)
+[Templates Directory](/spring-petclinic/petclinic-chart/templates/)
 
 ---
 
-## 9. MySQL Deployment
-```yaml
-# mysql-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mysql
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mysql
-  template:
-    metadata:
-      labels:
-        app: mysql
-    spec:
-      containers:
-      - name: mysql
-        image: mysql:8.0
-        env:
-        - name: MYSQL_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-credentials
-              key: password
-        ports:
-        - containerPort: 3306
-```
----
-
-## 10. CI/CD Pipeline
+## 9. CI/CD Pipeline
 ```groovy
 // Jenkinsfile
 pipeline {
@@ -512,7 +474,7 @@ pipeline {
 
 ---
 
-## 11. Post-deployment Verification
+## 10. Post-deployment Verification
 ```bash
 # Check deployment status
 kubectl get deployments -n petclinic
@@ -532,7 +494,7 @@ curl http://$(kubectl get svc petclinic -n petclinic -o jsonpath='{.status.loadB
 
 ---
 
-## 12. Troubleshooting Guide
+## 11. Troubleshooting Guide
 
 ### Common Issues and Solutions
 
