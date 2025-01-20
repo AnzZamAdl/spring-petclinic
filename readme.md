@@ -408,6 +408,7 @@ petclinic-chart/
 📑 Templates Directory - Contains Kubernetes manifests and service definitions
 
 [Petclinic Chart Directory](/spring-petclinic/petclinic-chart/)
+
 [Templates Directory](/spring-petclinic/petclinic-chart/templates/)
 
 ---
