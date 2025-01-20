@@ -109,10 +109,46 @@ sudo ./install-jenkins.sh
 * Default Port: 8080
 * Initial Admin Password: Found in script output or at `/var/lib/jenkins/secrets/initialAdminPassword`
 
-### Configure kubectl
+## AWS Credentials Configuration
+
+### Generate Access Keys
+1. Log in to AWS Management Console
+2. Navigate to IAM (Identity and Access Management)
+3. Select your IAM user
+4. Go to "Security credentials" tab
+5. Click "Create access key"
+6. Download and securely store the credentials file
+
+### Configure AWS CLI
 ```bash
-aws eks update-kubeconfig --name your-cluster-name --region your-region
+# Configure AWS CLI with your credentials
+aws configure
+
+AWS Access Key ID [None]: <Your-Access-Key>
+AWS Secret Access Key [None]: <Your-Secret-Key>
+Default region name [None]: ap-south-1
+Default output format [None]: table
+
+# Verify AWS CLI configuration
+aws sts get-caller-identity
 ```
+
+### Configure kubectl for EKS
+```bash
+# List available EKS clusters
+aws eks list-clusters
+
+# Update kubeconfig for your EKS cluster
+aws eks update-kubeconfig --name <your-cluster-name> --region <your-cluster-region>
+
+# Verify kubeconfig
+cat ~/.kube/config
+
+# Test kubectl configuration
+kubectl get nodes
+kubectl get ns
+```
+
 
 ## SonarQube Server Installation Script
 
