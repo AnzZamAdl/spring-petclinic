@@ -289,11 +289,39 @@ curl -v http://<sonar-ip>:9000
 ```
 ---
 ## 6. Tools and Plugins Configuration
-### Required Jenkins Plugins
-- Docker Pipeline
-- Kubernetes CLI
-- GitHub Integration
-- Pipeline AWS Steps
+### Essential Jenkins Plugins
+1. **Pipeline and SCM**
+   - Pipeline
+   - Git
+   - GitHub Integration
+
+2. **Build Tools**
+   - Maven Integration
+   - JDK Tool
+
+3. **Docker & Kubernetes**
+   - Docker
+   - Docker Pipeline
+   - Kubernetes
+   - Kubernetes CLI
+
+4. **SonarQube**
+   - SonarQube Scanner
+   - Quality Gates
+
+5. **Credentials**
+   - Credentials Binding
+   - Credentials
+
+## Installation Steps
+1. Go to Jenkins Dashboard → Manage Jenkins → Plugins → Available plugins
+2. Search and install the above plugins
+3. Select "Install without restart"
+4. Restart Jenkins after installation completes
+
+## Verification
+After restart, verify in Manage Jenkins → Plugins → Installed plugins that all required plugins are active.
+
 
 ### Configure Credentials
 1. Navigate to Jenkins > Manage Jenkins > Manage Credentials
@@ -301,8 +329,10 @@ curl -v http://<sonar-ip>:9000
    - GitHub credentials
    - Docker Hub credentials
    - AWS credentials
+   - SonarQube Token
    - Kubernetes configuration
 
+---
 
 ## 7. Kubernetes Configuration
 ### Create ConfigMap
@@ -331,6 +361,7 @@ data:
   username: cGV0Y2xpbmlj
   password: cGV0Y2xpbmljX3Bhc3N3b3Jk
 ```
+---
 
 ## 8. Helm Charts
 ### Create Helm Chart Structure
@@ -362,6 +393,8 @@ configMap:
   name: petclinic-config
 ```
 
+---
+
 ## 9. MySQL Deployment
 ```yaml
 # mysql-deployment.yaml
@@ -391,6 +424,7 @@ spec:
         ports:
         - containerPort: 3306
 ```
+---
 
 ## 10. CI/CD Pipeline
 ```groovy
@@ -452,6 +486,8 @@ pipeline {
 }
 ```
 
+---
+
 ## 11. Post-deployment Verification
 ```bash
 # Check deployment status
@@ -469,6 +505,8 @@ kubectl logs -f deployment/petclinic -n petclinic
 # Test the application
 curl http://$(kubectl get svc petclinic -n petclinic -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):8080
 ```
+
+---
 
 ## 12. Troubleshooting Guide
 
