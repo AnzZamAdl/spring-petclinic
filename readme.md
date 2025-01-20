@@ -108,6 +108,7 @@ sudo ./install-jenkins.sh
 * URL: http://YOUR_SERVER_IP:8080
 * Default Port: 8080
 * Initial Admin Password: Found in script output or at `/var/lib/jenkins/secrets/initialAdminPassword`
+---
 
 ## AWS Credentials Configuration
 
