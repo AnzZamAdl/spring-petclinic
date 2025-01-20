@@ -88,36 +88,26 @@ aws eks update-kubeconfig --name petclinic-cluster --region your-region
 ```
 
 ## 3. Jenkins Installation
-### Deploy Jenkins on EKS
-```yaml
-# jenkins-values.yaml
-controller:
-  serviceType: LoadBalancer
-  installPlugins:
-    - kubernetes:3.12.0
-    - workflow-aggregator:2.6
-    - git:4.11.0
-    - configuration-as-code:1.55
-    - docker-workflow:1.28
-```
+## Jenkins Server Installation Script
 
+📚 [Download Jenkins Installation Script](https://drive.google.com/file/d/1WV3AMZdCGj50_edHGfq0_GxAooVDT6xt/view?usp=sharing)
+
+This shell script automates the installation and configuration of Jenkins server and required tools.
+
+### Script Usage
 ```bash
-# Add Jenkins Helm repo
-helm repo add jenkins https://charts.jenkins.io
-helm repo update
-
-# Install Jenkins
-helm install jenkins jenkins/jenkins -f jenkins-values.yaml
+chmod +x install-jenkins.sh
+sudo ./install-jenkins.sh
 ```
 
-### Configure kubectl in Jenkins
-```bash
-# Get Jenkins pod name
-JENKINS_POD=$(kubectl get pods -l app.kubernetes.io/component=jenkins-controller -o jsonpath="{.items[0].metadata.name}")
-
-# Copy kubeconfig to Jenkins pod
-kubectl cp ~/.kube/config ${JENKINS_POD}:/var/jenkins_home/.kube/config
-```
+### Components Installed:
+* Jenkins server
+* Docker
+* kubectl
+* AWS CLI
+* Trivy scanner
+* Helm
+* Required permissions and configurations
 
 ## 4. Tools and Plugins Configuration
 ### Required Jenkins Plugins
