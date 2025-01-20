@@ -209,13 +209,12 @@ sudo journalctl -u sonarqube -f
 * Java 11 or higher
 
 
-## 4. Tools and Plugins Configuration
+## 6. Tools and Plugins Configuration
 ### Required Jenkins Plugins
 - Docker Pipeline
 - Kubernetes CLI
 - GitHub Integration
 - Pipeline AWS Steps
-- CloudBees AWS Credentials
 
 ### Configure Credentials
 1. Navigate to Jenkins > Manage Jenkins > Manage Credentials
