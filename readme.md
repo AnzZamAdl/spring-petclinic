@@ -413,64 +413,11 @@ petclinic-chart/
 ---
 
 ## 9. CI/CD Pipeline
-```groovy
-// Jenkinsfile
-pipeline {
-    agent any
-    
-    environment {
-        DOCKER_IMAGE = 'your-docker-hub-username/spring-petclinic'
-        DOCKER_TAG = "${BUILD_NUMBER}"
-    }
-    
-    stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/SubbuTechOps/spring-petclinic.git'
-            }
-        }
-        
-        stage('Build') {
-            steps {
-                sh './mvnw clean package -DskipTests'
-            }
-        }
-        
-        stage('Test') {
-            steps {
-                sh './mvnw test'
-            }
-        }
-        
-        stage('Security Scan') {
-            steps {
-                sh "trivy image ${DOCKER_IMAGE}:${DOCKER_TAG}"
-            }
-        }
-        
-        stage('Build and Push Docker Image') {
-            steps {
-                script {
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
-                    docker.withRegistry('', 'docker-hub-credentials') {
-                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
-                    }
-                }
-            }
-        }
-        
-        stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    sh "helm upgrade --install petclinic ./petclinic \
-                        --set image.tag=${DOCKER_TAG} \
-                        --namespace petclinic"
-                }
-            }
-        }
-    }
-}
-```
+
+🔄 Jenkins Pipeline - Contains CICD pipeline configuration and build steps:
+
+[Jenkins Pipeline File](https://github.com/SubbuTechOps/spring-petclinic/blob/develop/Jenkinsfile)
+
 
 ---
 
