@@ -62,6 +62,7 @@ cd spring-petclinic
 # Verify the contents
 ls -la
 ```
+---
 
 ## 2. EKS Cluster Setup
 ### EKS Cluster Setup Guide
@@ -81,6 +82,8 @@ This guide includes:
 * Node group management
 * Access control configuration
 * Best practices and recommendations
+
+---
 
 ## 3. Jenkins Installation
 ### Jenkins Server Installation Script
@@ -150,7 +153,7 @@ cat ~/.kube/config
 kubectl get nodes
 kubectl get ns
 ```
-
+---
 ## 5. SonarQube Server Installation
 ### SonarQube Server Installation Script
 
@@ -187,6 +190,21 @@ sudo tail -f /opt/sonarqube/logs/sonar.log
 # Check if port is listening
 sudo netstat -tlpn | grep 9000
 ```
+### Service Management:
+```bash
+# Stop SonarQube
+sudo systemctl stop sonarqube
+
+# Start SonarQube
+sudo systemctl start sonarqube
+
+# Restart SonarQube
+sudo systemctl restart sonarqube
+
+# Check logs
+sudo journalctl -u sonarqube -f
+```
+
 ### Create PetClinic Project
 1. Login to SonarQube (http://YOUR_SERVER_IP:9000)
 2. Navigate to "Projects" → "Create Project"
@@ -211,7 +229,7 @@ sudo netstat -tlpn | grep 9000
    - Create Projects
    - Create Applications
    - Create Portfolios
-
+----
 ### Configure Jenkins Integration
 
 #### Add SonarQube Token to Jenkins
@@ -225,56 +243,36 @@ sudo netstat -tlpn | grep 9000
    ID: sonar-credentials
    Description: SonarQube Authentication Token
    ```
+#### Configure SonarQube Server in Jenkins
+1. Navigate to Jenkins Dashboard → Manage Jenkins → System
+2. Scroll down to the "SonarQube servers" section
+3. Configure the following settings:
+   - Check "Environment variables" if you want administrators to inject SonarQube configuration as environment variables
+   - Under "SonarQube installations":
+     - Name: `SonarQube`
+     - Server URL: `http://3.92.82.78:9000` (replace with your SonarQube server IP)
+     - Server authentication token: 
+       - Click "Add" → Select "Jenkins"
+       - Kind: Secret text
+       - Secret: Paste your SonarQube authentication token
+       - ID: `sonar-credentials`
+       - Description: "SonarQube Authentication Token"
+       - Click "Add"
+     - Select the created credential from the dropdown
+   - Click "Advanced" if you need to configure additional settings
+   - Click "Save" or "Apply" to preserve the configuration
 
-#### Add SonarQube Configuration in Jenkinsfile
+### Verify SonarQube Configuration
+1. After saving the configuration, return to the Jenkins dashboard
+2. Create a test pipeline job
+3. Add the following environment variables in your Jenkinsfile:
 ```groovy
-pipeline {
-    environment {
-        SONARQUBE_HOST_URL = 'http://<sonar-ip>:9000/'
-        SONARQUBE_PROJECT_KEY = 'PetClinic'
-        SONARQUBE_TOKEN = credentials('sonar-credentials')
-    }
-    
-    stages {
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    withSonarQubeEnv('SonarQube') {
-                       sh """
-                       mvn sonar:sonar \
-                       -Dsonar.projectKey=${SONARQUBE_PROJECT_KEY} \
-                       -Dsonar.host.url=${SONARQUBE_HOST_URL} \
-                       -Dsonar.login=${SONARQUBE_TOKEN}
-                       """
-                   }
-                }
-            }
-        }
-    }
+environment {
+    SONARQUBE_HOST_URL = 'http://<sonar-ip>:9000'
+    SONARQUBE_PROJECT_KEY = 'PetClinic'
+    SONARQUBE_TOKEN = credentials('sonar-credentials')
 }
 ```
-
-#### Configure SonarQube Scanner in Jenkins
-1. Go to Manage Jenkins → Tools
-2. Find "SonarQube Scanner"
-3. Add SonarQube Scanner:
-   - Name: `SonarScanner`
-   - Install automatically: Check
-   - Version: Choose latest version
-
-#### Configure SonarQube Server in Jenkins
-1. Go to Manage Jenkins → System
-2. Find "SonarQube Servers"
-3. Add SonarQube:
-   - Name: `SonarQube`
-   - Server URL: `http://<sonar-ip>:9000`
-   - Server authentication token: Select your credentials
-
-### Verify Integration
-1. Run a test pipeline
-2. Check SonarQube dashboard for analysis results
-3. Verify quality gates status in Jenkins pipeline
-
 ### Troubleshooting
 ```bash
 # Check SonarQube logs
@@ -289,29 +287,7 @@ sudo tail -f /var/log/jenkins/jenkins.log
 # Test SonarQube connectivity from Jenkins
 curl -v http://<sonar-ip>:9000
 ```
-
-
-### Service Management:
-```bash
-# Stop SonarQube
-sudo systemctl stop sonarqube
-
-# Start SonarQube
-sudo systemctl start sonarqube
-
-# Restart SonarQube
-sudo systemctl restart sonarqube
-
-# Check logs
-sudo journalctl -u sonarqube -f
-```
-
-### System Requirements:
-* Minimum 2GB RAM
-* 1GB free space
-* Java 11 or higher
-
-
+---
 ## 6. Tools and Plugins Configuration
 ### Required Jenkins Plugins
 - Docker Pipeline
