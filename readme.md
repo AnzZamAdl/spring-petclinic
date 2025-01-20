@@ -82,7 +82,8 @@ This guide includes:
 * Access control configuration
 * Best practices and recommendations
 
-## Jenkins Server Installation Script
+## 3. Jenkins Installation
+### Jenkins Server Installation Script
 
 📚 [Download Jenkins Installation Script](https://drive.google.com/file/d/1wxs6RNi8qInij8WUtwIUzYETtCaDAtfE/view?usp=sharing)
 
