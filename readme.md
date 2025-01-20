@@ -406,9 +406,9 @@ petclinic-chart/
 - 🗂️ Petclinic Chart Directory - Contains main chart configuration and values
 - 📑 Templates Directory - Contains Kubernetes manifests and service definitions
 
-[Petclinic Chart Directory](/spring-petclinic/petclinic-chart/)
+[Petclinic Chart Directory](https://github.com/SubbuTechOps/spring-petclinic/tree/develop/petclinic-chart)
 
-[Templates Directory](/spring-petclinic/petclinic-chart/templates/)
+[Templates Directory](https://github.com/SubbuTechOps/spring-petclinic/tree/develop/petclinic-chart/templates)
 
 ---
 
