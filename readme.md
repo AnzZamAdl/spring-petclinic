@@ -82,11 +82,6 @@ This guide includes:
 * Node group management
 * Access control configuration
 
-### Configure kubectl
-```bash
-aws eks update-kubeconfig --name petclinic-cluster --region your-region
-```
-
 ## 3. Jenkins Installation
 ## Jenkins Server Installation Script
 
@@ -108,6 +103,10 @@ sudo ./install-jenkins.sh
 * Trivy scanner
 * Helm
 * Required permissions and configurations
+### Configure kubectl
+```bash
+aws eks update-kubeconfig --name petclinic-cluster --region your-region
+```
 
 ## 4. Tools and Plugins Configuration
 ### Required Jenkins Plugins
