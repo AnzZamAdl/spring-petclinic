@@ -423,8 +423,7 @@ petclinic-chart/
 
 ## 10. Post-deployment Verification
 
-📋 Deployment Resources
-🔍 Post-deployment Verification - Complete verification steps and checks after deployment:
+📋 Deployment Resources:
 
 * 🔍 [Post-deployment Verification](https://github.com/SubbuTechOps/spring-petclinic/blob/develop/documentation/deployment-verification.md) - Complete verification steps and checks after deployment
 
@@ -464,11 +463,13 @@ curl http://$(kubectl get svc petclinic -n petclinic-dev -o jsonpath='{.status.l
    ```
 
 3. **Kubernetes Deployment Issues**
-   🛠️ Kubernetes Troubleshooting Guide - Common issues and solutions for Kubernetes deployments:
-   * 🛠️ [Kubernetes Troubleshooting Guide](https://github.com/SubbuTechOps/spring-petclinic/blob/develop/documentation/k8s-troubleshooting-guide.md) - Common issues and solutions for Kubernetes deployments
-   ```
 
-5. **Database Connection Issues**
+   🛠️ Kubernetes Troubleshooting Guide:
+   
+   * 🛠️ [Kubernetes Troubleshooting Guide](https://github.com/SubbuTechOps/spring-petclinic/blob/develop/documentation/k8s-troubleshooting-guide.md) - Common issues and solutions for Kubernetes deployments
+  
+
+4. **Database Connection Issues**
    - Issue: Application can't connect to MySQL
    - Solution: Verify MySQL service and credentials
    ```bash
@@ -481,13 +482,13 @@ curl http://$(kubectl get svc petclinic -n petclinic-dev -o jsonpath='{.status.l
 kubectl get nodes
 
 # Check pod health
-kubectl get pods -n petclinic -o wide
+kubectl get pods -n petclinic-dev -o wide
 
 # Check logs
-kubectl logs -f deployment/petclinic -n petclinic
+kubectl logs -f deployment/petclinic -n petclinic-dev
 
 # Check service endpoints
-kubectl get endpoints -n petclinic
+kubectl get endpoints -n petclinic-dev
 ```
 
 Remember to replace placeholder values such as `your-region`, `your-docker-hub-username`, and adjust resource limits based on your requirements.
