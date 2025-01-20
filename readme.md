@@ -230,7 +230,7 @@ sudo netstat -tlpn | grep 9000
 ```groovy
 pipeline {
     environment {
-        SONARQUBE_HOST_URL = 'http://3.92.82.78:9000/'
+        SONARQUBE_HOST_URL = 'http://<sonar-ip>:9000/'
         SONARQUBE_PROJECT_KEY = 'PetClinic'
         SONARQUBE_TOKEN = credentials('sonar-credentials')
     }
@@ -269,7 +269,7 @@ pipeline {
 2. Find "SonarQube Servers"
 3. Add SonarQube:
    - Name: `SonarQube`
-   - Server URL: `http://3.92.82.78:9000`
+   - Server URL: `http://<sonar-ip>:9000`
    - Server authentication token: Select your credentials
 
 ### Verify Integration
@@ -289,7 +289,7 @@ sudo systemctl status sonarqube
 sudo tail -f /var/log/jenkins/jenkins.log
 
 # Test SonarQube connectivity from Jenkins
-curl -v http://3.92.82.78:9000
+curl -v http://<sonar-ip>:9000
 ```
 
 
