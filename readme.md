@@ -463,8 +463,6 @@ curl http://$(kubectl get svc petclinic -n petclinic-dev -o jsonpath='{.status.l
    ```
 
 3. **Kubernetes Deployment Issues**
-
-   🛠️ Kubernetes Troubleshooting Guide:
    
    * 🛠️ [Kubernetes Troubleshooting Guide](https://github.com/SubbuTechOps/spring-petclinic/blob/develop/documentation/k8s-troubleshooting-guide.md) - Common issues and solutions for Kubernetes deployments
   
