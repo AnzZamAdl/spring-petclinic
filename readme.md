@@ -403,9 +403,8 @@ petclinic-chart/
 ```
 
 #### Check the following directory for all charts used in the project:
-
-🗂️ Petclinic Chart Directory - Contains main chart configuration and values
-📑 Templates Directory - Contains Kubernetes manifests and service definitions
+- 🗂️ Petclinic Chart Directory - Contains main chart configuration and values
+- 📑 Templates Directory - Contains Kubernetes manifests and service definitions
 
 [Petclinic Chart Directory](/spring-petclinic/petclinic-chart/)
 
