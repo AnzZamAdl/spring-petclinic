@@ -36,9 +36,9 @@ Or you can run it from Maven directly using the Spring Boot Maven plugin. If you
 - [1. Repository Setup](#1-repository-setup)
 - [2. EKS Cluster Setup](#2-eks-cluster-setup)
 - [3. Jenkins Installation](#3-jenkins-installation)
-- [4. Tools and Plugins Configuration](#4-tools-and-plugins-configuration)
-- [5. Docker Setup](#5-docker-setup)
-- [6. Trivy Installation](#6-trivy-installation)
+- [4. AWS Credentials Configuration](#4-aws-credentials-configuration)
+- [5. SonarQube Server Installation](#5-sonarqube-server-installation)
+- [6. Tools and Plugins Configuration](#4-tools-and-plugins-configuration)
 - [7. Kubernetes Configuration](#7-kubernetes-configuration)
 - [8. Helm Charts](#8-helm-charts)
 - [9. MySQL Deployment](#9-mysql-deployment)
@@ -111,7 +111,7 @@ sudo ./install-jenkins.sh
 * Initial Admin Password: Found in script output or at `/var/lib/jenkins/secrets/initialAdminPassword`
 ---
 
-## AWS Credentials Configuration
+## 4. AWS Credentials Configuration
 
 ### Generate Access Keys
 1. Log in to AWS Management Console
@@ -135,7 +135,7 @@ Default output format [None]: table
 aws sts get-caller-identity
 ```
 
-### Configure kubectl for EKS
+### Configure kubectl for EKS on Jenkins Server
 ```bash
 # List available EKS clusters
 aws eks list-clusters
@@ -151,8 +151,8 @@ kubectl get nodes
 kubectl get ns
 ```
 
-
-## SonarQube Server Installation Script
+## 5. SonarQube Server Installation
+### SonarQube Server Installation Script
 
 📚 [Download SonarQube Installation Script](https://drive.google.com/file/d/1pl3PxQx9urAapolsf5KM94JoYVMInBE2/view?usp=sharing)
 
