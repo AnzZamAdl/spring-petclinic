@@ -105,7 +105,7 @@ sudo ./install-jenkins.sh
 * Required permissions and configurations
 ### Configure kubectl
 ```bash
-aws eks update-kubeconfig --name petclinic-cluster --region your-region
+aws eks update-kubeconfig --name your-cluster-name --region your-region
 ```
 
 ## 4. Tools and Plugins Configuration
