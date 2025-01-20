@@ -29,134 +29,374 @@ Or you can run it from Maven directly using the Spring Boot Maven plugin. If you
 
 > NOTE: If you prefer to use Gradle, you can build the app using `./gradlew build` and look for the jar file in `build/libs`.
 
-## Building a Container
+# Spring PetClinic Application Deployment Guide
+## Table of Contents
+- [Prerequisites](#prerequisites)
+- [1. Repository Setup](#1-repository-setup)
+- [2. EKS Cluster Setup](#2-eks-cluster-setup)
+- [3. Jenkins Installation](#3-jenkins-installation)
+- [4. Tools and Plugins Configuration](#4-tools-and-plugins-configuration)
+- [5. Docker Setup](#5-docker-setup)
+- [6. Trivy Installation](#6-trivy-installation)
+- [7. Kubernetes Configuration](#7-kubernetes-configuration)
+- [8. Helm Charts](#8-helm-charts)
+- [9. MySQL Deployment](#9-mysql-deployment)
+- [10. CI/CD Pipeline](#10-cicd-pipeline)
+- [11. Post-deployment Verification](#11-post-deployment-verification)
+- [12. Troubleshooting Guide](#12-troubleshooting-guide)
 
-There is no `Dockerfile` in this project. You can build a container image (if you have a docker daemon) using the Spring Boot build plugin:
+## Prerequisites
+- AWS Account with appropriate permissions
+- AWS CLI installed and configured
+- kubectl installed
+- Helm installed
+- Git installed
 
+## 1. Repository Setup
 ```bash
-./mvnw spring-boot:build-image
+# Clone the repository
+git clone https://github.com/SubbuTechOps/spring-petclinic.git
+cd spring-petclinic
+
+# Verify the contents
+ls -la
 ```
 
-## In case you find a bug/suggested improvement for Spring Petclinic
+## 2. EKS Cluster Setup
+### Create CloudFormation Stack
+```yaml
+# eks-cluster.yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'EKS cluster using CloudFormation'
 
-Our issue tracker is available [here](https://github.com/spring-projects/spring-petclinic/issues).
+Parameters:
+  ClusterName:
+    Type: String
+    Default: petclinic-cluster
+    Description: EKS cluster name
 
-## Database configuration
+Resources:
+  EKSClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: eks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
 
-In its default configuration, Petclinic uses an in-memory database (H2) which
-gets populated at startup with data. The h2 console is exposed at `http://localhost:8080/h2-console`,
-and it is possible to inspect the content of the database using the `jdbc:h2:mem:<uuid>` URL. The UUID is printed at startup to the console.
-
-A similar setup is provided for MySQL and PostgreSQL if a persistent database configuration is needed. Note that whenever the database type changes, the app needs to run with a different profile: `spring.profiles.active=mysql` for MySQL or `spring.profiles.active=postgres` for PostgreSQL. See the [Spring Boot documentation](https://docs.spring.io/spring-boot/how-to/properties-and-configuration.html#howto.properties-and-configuration.set-active-spring-profiles) for more detail on how to set the active profile.
-
-You can start MySQL or PostgreSQL locally with whatever installer works for your OS or use docker:
-
-```bash
-docker run -e MYSQL_USER=petclinic -e MYSQL_PASSWORD=petclinic -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=petclinic -p 3306:3306 mysql:8.4
+  EKSCluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: !Ref ClusterName
+      Version: '1.27'
+      RoleArn: !GetAtt EKSClusterRole.Arn
+      ResourcesVpcConfig:
+        SecurityGroupIds: 
+          - !Ref ClusterSecurityGroup
+        SubnetIds: 
+          - !Ref PublicSubnet1
+          - !Ref PublicSubnet2
 ```
 
-or
-
+Deploy the stack:
 ```bash
-docker run -e POSTGRES_USER=petclinic -e POSTGRES_PASSWORD=petclinic -e POSTGRES_DB=petclinic -p 5432:5432 postgres:16.3
+aws cloudformation create-stack \
+  --stack-name petclinic-eks \
+  --template-body file://eks-cluster.yaml \
+  --capabilities CAPABILITY_IAM
 ```
 
-Further documentation is provided for [MySQL](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/resources/db/mysql/petclinic_db_setup_mysql.txt)
-and [PostgreSQL](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/resources/db/postgres/petclinic_db_setup_postgres.txt).
-
-Instead of vanilla `docker` you can also use the provided `docker-compose.yml` file to start the database containers. Each one has a profile just like the Spring profile:
-
+### Configure kubectl
 ```bash
-docker-compose --profile mysql up
+aws eks update-kubeconfig --name petclinic-cluster --region your-region
 ```
 
-or
-
-```bash
-docker-compose --profile postgres up
+## 3. Jenkins Installation
+### Deploy Jenkins on EKS
+```yaml
+# jenkins-values.yaml
+controller:
+  serviceType: LoadBalancer
+  installPlugins:
+    - kubernetes:3.12.0
+    - workflow-aggregator:2.6
+    - git:4.11.0
+    - configuration-as-code:1.55
+    - docker-workflow:1.28
 ```
 
-## Test Applications
+```bash
+# Add Jenkins Helm repo
+helm repo add jenkins https://charts.jenkins.io
+helm repo update
 
-At development time we recommend you use the test applications set up as `main()` methods in `PetClinicIntegrationTests` (using the default H2 database and also adding Spring Boot Devtools), `MySqlTestApplication` and `PostgresIntegrationTests`. These are set up so that you can run the apps in your IDE to get fast feedback and also run the same classes as integration tests against the respective database. The MySql integration tests use Testcontainers to start the database in a Docker container, and the Postgres tests use Docker Compose to do the same thing.
+# Install Jenkins
+helm install jenkins jenkins/jenkins -f jenkins-values.yaml
+```
 
-## Compiling the CSS
+### Configure kubectl in Jenkins
+```bash
+# Get Jenkins pod name
+JENKINS_POD=$(kubectl get pods -l app.kubernetes.io/component=jenkins-controller -o jsonpath="{.items[0].metadata.name}")
 
-There is a `petclinic.css` in `src/main/resources/static/resources/css`. It was generated from the `petclinic.scss` source, combined with the [Bootstrap](https://getbootstrap.com/) library. If you make changes to the `scss`, or upgrade Bootstrap, you will need to re-compile the CSS resources using the Maven profile "css", i.e. `./mvnw package -P css`. There is no build profile for Gradle to compile the CSS.
+# Copy kubeconfig to Jenkins pod
+kubectl cp ~/.kube/config ${JENKINS_POD}:/var/jenkins_home/.kube/config
+```
 
-## Working with Petclinic in your IDE
+## 4. Tools and Plugins Configuration
+### Required Jenkins Plugins
+- Docker Pipeline
+- Kubernetes CLI
+- GitHub Integration
+- Pipeline AWS Steps
+- CloudBees AWS Credentials
 
-### Prerequisites
+### Configure Credentials
+1. Navigate to Jenkins > Manage Jenkins > Manage Credentials
+2. Add the following credentials:
+   - GitHub credentials
+   - Docker Hub credentials
+   - AWS credentials
+   - Kubernetes configuration
 
-The following items should be installed in your system:
+## 5. Docker Setup
+```bash
+# Install Docker on Jenkins pod
+apt-get update
+apt-get install -y docker.io
 
-- Java 17 or newer (full JDK, not a JRE)
-- [Git command line tool](https://help.github.com/articles/set-up-git)
-- Your preferred IDE
-  - Eclipse with the m2e plugin. Note: when m2e is available, there is an m2 icon in `Help -> About` dialog. If m2e is
-  not there, follow the install process [here](https://www.eclipse.org/m2e/)
-  - [Spring Tools Suite](https://spring.io/tools) (STS)
-  - [IntelliJ IDEA](https://www.jetbrains.com/idea/)
-  - [VS Code](https://code.visualstudio.com)
+# Add Jenkins user to docker group
+usermod -aG docker jenkins
 
-### Steps
+# Start Docker service
+systemctl start docker
+systemctl enable docker
+```
 
-1. On the command line run:
+## 6. Trivy Installation
+```bash
+# Install Trivy
+wget https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_Linux-64bit.deb
+dpkg -i trivy_0.18.3_Linux-64bit.deb
+```
 
-    ```bash
-    git clone https://github.com/spring-projects/spring-petclinic.git
-    ```
+## 7. Kubernetes Configuration
+### Create ConfigMap
+```yaml
+# petclinic-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: petclinic-config
+data:
+  application.properties: |
+    spring.profiles.active=mysql
+    spring.datasource.url=jdbc:mysql://mysql:3306/petclinic
+    spring.datasource.initialization-mode=always
+```
 
-1. Inside Eclipse or STS:
+### Create Secrets
+```yaml
+# petclinic-secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-credentials
+type: Opaque
+data:
+  username: cGV0Y2xpbmlj
+  password: cGV0Y2xpbmljX3Bhc3N3b3Jk
+```
 
-    Open the project via `File -> Import -> Maven -> Existing Maven project`, then select the root directory of the cloned repo.
+## 8. Helm Charts
+### Create Helm Chart Structure
+```bash
+helm create petclinic
+```
 
-    Then either build on the command line `./mvnw generate-resources` or use the Eclipse launcher (right-click on project and `Run As -> Maven install`) to generate the CSS. Run the application's main method by right-clicking on it and choosing `Run As -> Java Application`.
+### Update values.yaml
+```yaml
+# petclinic/values.yaml
+image:
+  repository: your-docker-hub-username/spring-petclinic
+  tag: latest
+  pullPolicy: Always
 
-1. Inside IntelliJ IDEA:
+service:
+  type: LoadBalancer
+  port: 8080
 
-    In the main menu, choose `File -> Open` and select the Petclinic [pom.xml](pom.xml). Click on the `Open` button.
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1024Mi
+  requests:
+    cpu: 500m
+    memory: 512Mi
 
-    - CSS files are generated from the Maven build. You can build them on the command line `./mvnw generate-resources` or right-click on the `spring-petclinic` project then `Maven -> Generates sources and Update Folders`.
+configMap:
+  name: petclinic-config
+```
 
-    - A run configuration named `PetClinicApplication` should have been created for you if you're using a recent Ultimate version. Otherwise, run the application by right-clicking on the `PetClinicApplication` main class and choosing `Run 'PetClinicApplication'`.
+## 9. MySQL Deployment
+```yaml
+# mysql-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-credentials
+              key: password
+        ports:
+        - containerPort: 3306
+```
 
-1. Navigate to the Petclinic
+## 10. CI/CD Pipeline
+```groovy
+// Jenkinsfile
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_IMAGE = 'your-docker-hub-username/spring-petclinic'
+        DOCKER_TAG = "${BUILD_NUMBER}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/SubbuTechOps/spring-petclinic.git'
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                sh './mvnw clean package -DskipTests'
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                sh './mvnw test'
+            }
+        }
+        
+        stage('Security Scan') {
+            steps {
+                sh "trivy image ${DOCKER_IMAGE}:${DOCKER_TAG}"
+            }
+        }
+        
+        stage('Build and Push Docker Image') {
+            steps {
+                script {
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    docker.withRegistry('', 'docker-hub-credentials') {
+                        docker.image("${DOCKER_IMAGE}:${DOCKER_TAG}").push()
+                    }
+                }
+            }
+        }
+        
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    sh "helm upgrade --install petclinic ./petclinic \
+                        --set image.tag=${DOCKER_TAG} \
+                        --namespace petclinic"
+                }
+            }
+        }
+    }
+}
+```
 
-    Visit [http://localhost:8080](http://localhost:8080) in your browser.
+## 11. Post-deployment Verification
+```bash
+# Check deployment status
+kubectl get deployments -n petclinic
 
-## Looking for something in particular?
+# Check pods
+kubectl get pods -n petclinic
 
-|Spring Boot Configuration | Class or Java property files  |
-|--------------------------|---|
-|The Main Class | [PetClinicApplication](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/PetClinicApplication.java) |
-|Properties Files | [application.properties](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/resources) |
-|Caching | [CacheConfiguration](https://github.com/spring-projects/spring-petclinic/blob/main/src/main/java/org/springframework/samples/petclinic/system/CacheConfiguration.java) |
+# Check services
+kubectl get svc -n petclinic
 
-## Interesting Spring Petclinic branches and forks
+# View logs
+kubectl logs -f deployment/petclinic -n petclinic
 
-The Spring Petclinic "main" branch in the [spring-projects](https://github.com/spring-projects/spring-petclinic)
-GitHub org is the "canonical" implementation based on Spring Boot and Thymeleaf. There are
-[quite a few forks](https://spring-petclinic.github.io/docs/forks.html) in the GitHub org
-[spring-petclinic](https://github.com/spring-petclinic). If you are interested in using a different technology stack to implement the Pet Clinic, please join the community there.
+# Test the application
+curl http://$(kubectl get svc petclinic -n petclinic -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):8080
+```
 
-## Interaction with other open-source projects
+## 12. Troubleshooting Guide
 
-One of the best parts about working on the Spring Petclinic application is that we have the opportunity to work in direct contact with many Open Source projects. We found bugs/suggested improvements on various topics such as Spring, Spring Data, Bean Validation and even Eclipse! In many cases, they've been fixed/implemented in just a few days.
-Here is a list of them:
+### Common Issues and Solutions
 
-| Name | Issue |
-|------|-------|
-| Spring JDBC: simplify usage of NamedParameterJdbcTemplate | [SPR-10256](https://jira.springsource.org/browse/SPR-10256) and [SPR-10257](https://jira.springsource.org/browse/SPR-10257) |
-| Bean Validation / Hibernate Validator: simplify Maven dependencies and backward compatibility |[HV-790](https://hibernate.atlassian.net/browse/HV-790) and [HV-792](https://hibernate.atlassian.net/browse/HV-792) |
-| Spring Data: provide more flexibility when working with JPQL queries | [DATAJPA-292](https://jira.springsource.org/browse/DATAJPA-292) |
+1. **Jenkins Pipeline Failures**
+   - Issue: Maven build fails
+   - Solution: Check Java version compatibility and Maven settings
 
-## Contributing
+2. **Docker Issues**
+   - Issue: Permission denied
+   - Solution: Ensure Jenkins user is in docker group
+   ```bash
+   sudo usermod -aG docker jenkins
+   sudo service jenkins restart
+   ```
 
-The [issue tracker](https://github.com/spring-projects/spring-petclinic/issues) is the preferred channel for bug reports, feature requests and submitting pull requests.
+3. **Kubernetes Deployment Issues**
+   - Issue: Pods not starting
+   - Solution: Check pod events and logs
+   ```bash
+   kubectl describe pod <pod-name> -n petclinic
+   kubectl logs <pod-name> -n petclinic
+   ```
 
-For pull requests, editor preferences are available in the [editor config](.editorconfig) for easy use in common text editors. Read more and download plugins at <https://editorconfig.org>. If you have not previously done so, please fill out and submit the [Contributor License Agreement](https://cla.pivotal.io/sign/spring).
+4. **Database Connection Issues**
+   - Issue: Application can't connect to MySQL
+   - Solution: Verify MySQL service and credentials
+   ```bash
+   kubectl exec -it <mysql-pod> -- mysql -u root -p
+   ```
 
-## License
+### Health Check Commands
+```bash
+# Check node status
+kubectl get nodes
 
-The Spring PetClinic sample application is released under version 2.0 of the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).
+# Check pod health
+kubectl get pods -n petclinic -o wide
+
+# Check logs
+kubectl logs -f deployment/petclinic -n petclinic
+
+# Check service endpoints
+kubectl get endpoints -n petclinic
+```
+
+Remember to replace placeholder values such as `your-region`, `your-docker-hub-username`, and adjust resource limits based on your requirements.
+
+For additional support or specific error resolution, consult the project's GitHub issues or create a new issue with detailed information about the problem encountered.
