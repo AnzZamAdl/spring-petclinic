@@ -64,7 +64,7 @@ ls -la
 ```
 
 ## 2. EKS Cluster Setup
-# EKS Cluster Setup Guide
+### EKS Cluster Setup Guide
 
 This document provides access to the comprehensive guide for setting up an Amazon EKS (Elastic Kubernetes Service) cluster.
 
