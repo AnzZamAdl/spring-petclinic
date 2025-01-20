@@ -383,7 +383,7 @@ spec:
     fsType: ext4
 ```
 **Note:**
-### Guide: Setting Up EBS Volumes for Kubernetes PersistentVolumes
+#### Guide: Setting Up EBS Volumes for Kubernetes PersistentVolumes
 [EBS Volume Setup Guide](https://github.com/SubbuTechOps/storages-guide/blob/main/EBS/ebs-pv-guide.md)
 ---
 
