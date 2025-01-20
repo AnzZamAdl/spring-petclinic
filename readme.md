@@ -187,6 +187,111 @@ sudo tail -f /opt/sonarqube/logs/sonar.log
 # Check if port is listening
 sudo netstat -tlpn | grep 9000
 ```
+### Create PetClinic Project
+1. Login to SonarQube (http://YOUR_SERVER_IP:9000)
+2. Navigate to "Projects" → "Create Project"
+3. Select "Manual" setup
+4. Fill in project details:
+   - Project key: `PetClinic`
+   - Display name: `PetClinic`
+   - Main branch name: `main`
+
+### Generate Authentication Token
+1. Go to User → My Account → Security
+2. Generate a new token:
+   - Token name: `jenkins-integration`
+   - Expiration: Choose appropriate expiration (e.g., 30 days)
+3. Copy and securely store the generated token
+
+### Configure Project Permissions
+1. Go to Administration → Security → Users
+2. Click on your user
+3. Under "Permissions", ensure the following are enabled:
+   - Execute Analysis
+   - Create Projects
+   - Create Applications
+   - Create Portfolios
+
+### Configure Jenkins Integration
+
+#### Add SonarQube Token to Jenkins
+1. Navigate to Jenkins → Manage Jenkins → Credentials → System
+2. Click on "Global credentials" → "Add Credentials"
+3. Configure the credentials:
+   ```
+   Kind: Secret text
+   Scope: Global
+   Secret: <Your-SonarQube-Token>
+   ID: sonar-credentials
+   Description: SonarQube Authentication Token
+   ```
+
+#### Add SonarQube Configuration in Jenkinsfile
+```groovy
+pipeline {
+    environment {
+        SONARQUBE_HOST_URL = 'http://3.92.82.78:9000/'
+        SONARQUBE_PROJECT_KEY = 'PetClinic'
+        SONARQUBE_TOKEN = credentials('sonar-credentials')
+    }
+    
+    stages {
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    def scannerHome = tool 'SonarScanner'
+                    withSonarQubeEnv('SonarQube') {
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=${SONARQUBE_PROJECT_KEY} \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=${SONARQUBE_HOST_URL} \
+                            -Dsonar.login=${SONARQUBE_TOKEN}
+                        """
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+#### Configure SonarQube Scanner in Jenkins
+1. Go to Manage Jenkins → Tools
+2. Find "SonarQube Scanner"
+3. Add SonarQube Scanner:
+   - Name: `SonarScanner`
+   - Install automatically: Check
+   - Version: Choose latest version
+
+#### Configure SonarQube Server in Jenkins
+1. Go to Manage Jenkins → System
+2. Find "SonarQube Servers"
+3. Add SonarQube:
+   - Name: `SonarQube`
+   - Server URL: `http://3.92.82.78:9000`
+   - Server authentication token: Select your credentials
+
+### Verify Integration
+1. Run a test pipeline
+2. Check SonarQube dashboard for analysis results
+3. Verify quality gates status in Jenkins pipeline
+
+### Troubleshooting
+```bash
+# Check SonarQube logs
+sudo tail -f /opt/sonarqube/logs/sonar.log
+
+# Verify SonarQube service status
+sudo systemctl status sonarqube
+
+# Check Jenkins logs for integration issues
+sudo tail -f /var/log/jenkins/jenkins.log
+
+# Test SonarQube connectivity from Jenkins
+curl -v http://3.92.82.78:9000
+```
+
 
 ### Service Management:
 ```bash
