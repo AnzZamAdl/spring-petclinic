@@ -291,3 +291,87 @@ kubectl get <resource-type> <resource-name> -n <namespace> -o yaml
 - System Logs: `/var/log/syslog`
 - Container Runtime: `/var/log/containers/`
 - Kubelet Logs: `journalctl -u kubelet`
+
+---
+## General Debugging Commands
+
+### Pod Debugging
+```bash
+# Get pod details
+kubectl get pods -n <namespace> -o wide
+
+# Get pod logs
+kubectl logs <pod-name> -n <namespace>
+
+# Execute command in pod
+kubectl exec -it <pod-name> -n <namespace> -- /bin/bash
+
+# Get pod events
+kubectl get events -n <namespace> --sort-by='.lastTimestamp'
+```
+
+### Node Debugging
+```bash
+# Check node status
+kubectl get nodes -o wide
+
+# Debug node
+kubectl debug node/<node-name> -it --image=ubuntu
+
+# Cordon/Uncordon node
+kubectl cordon <node-name>
+kubectl uncordon <node-name>
+```
+
+### Network Debugging
+```bash
+# Test service DNS
+kubectl run -it --rm --restart=Never busybox --image=busybox -- nslookup mysql-service
+
+# Test connectivity
+kubectl exec -it <pod-name> -n <namespace> -- nc -zv <service-name> <port>
+
+# Check service endpoints
+kubectl get endpoints <service-name> -n <namespace>
+```
+
+## Best Practices
+
+1. **Resource Management:**
+   - Set appropriate resource requests and limits
+   - Monitor node capacity
+   - Use horizontal pod autoscaling
+
+2. **Storage:**
+   - Ensure EBS volumes are in correct AZ
+   - Use storage classes for dynamic provisioning
+   - Implement proper backup strategies
+
+3. **Security:**
+   - Use secrets for sensitive data
+   - Implement network policies
+   - Regular security group audits
+
+4. **Monitoring:**
+   - Deploy metrics-server
+   - Set up logging aggregation
+   - Configure alerts for critical issues
+
+5. **Deployment Strategy:**
+   - Use rolling updates
+   - Implement readiness/liveness probes
+   - Document deployment procedures
+
+## Quick References
+
+### Common Status Codes:
+- `Running`: Pod is running normally
+- `Pending`: Pod awaiting scheduling or volume attachment
+- `CrashLoopBackOff`: Container repeatedly crashing
+- `ImagePullBackOff`: Unable to pull container image
+- `CreateContainerConfigError`: Issues with pod configuration
+
+### Important Paths:
+- Kubelet config: `/etc/kubernetes/kubelet/kubelet-config.json`
+- PKI certificates: `/etc/kubernetes/pki/`
+- Container runtime: `/var/lib/containerd/`
