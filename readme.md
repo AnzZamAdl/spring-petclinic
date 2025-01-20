@@ -64,7 +64,6 @@ ls -la
 ```
 
 ## 2. EKS Cluster Setup
-### Create CloudFormation Stack
 # EKS Cluster Setup Guide
 
 This document provides access to the comprehensive guide for setting up an Amazon EKS (Elastic Kubernetes Service) cluster.
@@ -81,11 +80,11 @@ This guide includes:
 * Security group setup
 * Node group management
 * Access control configuration
+* Best practices and recommendations
 
-## 3. Jenkins Installation
 ## Jenkins Server Installation Script
 
-📚 [Download Jenkins Installation Script](https://drive.google.com/file/d/1WV3AMZdCGj50_edHGfq0_GxAooVDT6xt/view?usp=sharing)
+📚 [Download Jenkins Installation Script](https://drive.google.com/file/d/1wxs6RNi8qInij8WUtwIUzYETtCaDAtfE/view?usp=sharing)
 
 This shell script automates the installation and configuration of Jenkins server and required tools.
 
@@ -96,6 +95,7 @@ sudo ./install-jenkins.sh
 ```
 
 ### Components Installed:
+* Essential system utilities (wget, curl, unzip, etc.)
 * Jenkins server
 * Docker
 * kubectl
@@ -103,10 +103,73 @@ sudo ./install-jenkins.sh
 * Trivy scanner
 * Helm
 * Required permissions and configurations
+
+### Access Details:
+* URL: http://YOUR_SERVER_IP:8080
+* Default Port: 8080
+* Initial Admin Password: Found in script output or at `/var/lib/jenkins/secrets/initialAdminPassword`
+
 ### Configure kubectl
 ```bash
 aws eks update-kubeconfig --name your-cluster-name --region your-region
 ```
+
+## SonarQube Server Installation Script
+
+📚 [Download SonarQube Installation Script](https://drive.google.com/file/d/1pl3PxQx9urAapolsf5KM94JoYVMInBE2/view?usp=sharing)
+
+This shell script automates the installation and configuration of SonarQube server.
+
+### Script Usage
+```bash
+chmod +x install-sonarqube.sh
+sudo ./install-sonarqube.sh
+```
+
+### Components and Configurations:
+* SonarQube server (Latest LTS version)
+* Dedicated sonar user
+* Systemd service for automatic startup
+* System limits and requirements
+* Firewall rules
+
+### Default Access:
+* URL: http://YOUR_SERVER_IP:9000
+* Default credentials: admin/admin
+* Default port: 9000
+
+### Verification Commands:
+```bash
+# Check service status
+sudo systemctl status sonarqube
+
+# View logs
+sudo tail -f /opt/sonarqube/logs/sonar.log
+
+# Check if port is listening
+sudo netstat -tlpn | grep 9000
+```
+
+### Service Management:
+```bash
+# Stop SonarQube
+sudo systemctl stop sonarqube
+
+# Start SonarQube
+sudo systemctl start sonarqube
+
+# Restart SonarQube
+sudo systemctl restart sonarqube
+
+# Check logs
+sudo journalctl -u sonarqube -f
+```
+
+### System Requirements:
+* Minimum 2GB RAM
+* 1GB free space
+* Java 11 or higher
+
 
 ## 4. Tools and Plugins Configuration
 ### Required Jenkins Plugins
@@ -124,26 +187,6 @@ aws eks update-kubeconfig --name your-cluster-name --region your-region
    - AWS credentials
    - Kubernetes configuration
 
-## 5. Docker Setup
-```bash
-# Install Docker on Jenkins pod
-apt-get update
-apt-get install -y docker.io
-
-# Add Jenkins user to docker group
-usermod -aG docker jenkins
-
-# Start Docker service
-systemctl start docker
-systemctl enable docker
-```
-
-## 6. Trivy Installation
-```bash
-# Install Trivy
-wget https://github.com/aquasecurity/trivy/releases/download/v0.18.3/trivy_0.18.3_Linux-64bit.deb
-dpkg -i trivy_0.18.3_Linux-64bit.deb
-```
 
 ## 7. Kubernetes Configuration
 ### Create ConfigMap
