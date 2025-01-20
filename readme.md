@@ -64,52 +64,22 @@ ls -la
 
 ## 2. EKS Cluster Setup
 ### Create CloudFormation Stack
-```yaml
-# eks-cluster.yaml
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'EKS cluster using CloudFormation'
+# EKS Cluster Setup Guide
 
-Parameters:
-  ClusterName:
-    Type: String
-    Default: petclinic-cluster
-    Description: EKS cluster name
+This document provides access to the comprehensive guide for setting up an Amazon EKS (Elastic Kubernetes Service) cluster.
 
-Resources:
-  EKSClusterRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: eks.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+## Guide Access
 
-  EKSCluster:
-    Type: AWS::EKS::Cluster
-    Properties:
-      Name: !Ref ClusterName
-      Version: '1.27'
-      RoleArn: !GetAtt EKSClusterRole.Arn
-      ResourcesVpcConfig:
-        SecurityGroupIds: 
-          - !Ref ClusterSecurityGroup
-        SubnetIds: 
-          - !Ref PublicSubnet1
-          - !Ref PublicSubnet2
-```
+📚 [EKS Cluster Setup Guide](https://drive.google.com/file/d/1mouXxkZ6kYjeL5KtRJp9BK6SLNTZOYEr/view?usp=sharing)
 
-Deploy the stack:
-```bash
-aws cloudformation create-stack \
-  --stack-name petclinic-eks \
-  --template-body file://eks-cluster.yaml \
-  --capabilities CAPABILITY_IAM
-```
+## Contents Overview
+
+This guide includes:
+* EKS cluster creation steps
+* Networking configuration
+* Security group setup
+* Node group management
+* Access control configuration
 
 ### Configure kubectl
 ```bash
