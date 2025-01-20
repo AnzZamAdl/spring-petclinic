@@ -38,7 +38,7 @@ Or you can run it from Maven directly using the Spring Boot Maven plugin. If you
 - [3. Jenkins Installation](#3-jenkins-installation)
 - [4. AWS Credentials Configuration](#4-aws-credentials-configuration)
 - [5. SonarQube Server Installation](#5-sonarqube-server-installation)
-- [6. Tools and Plugins Configuration](#4-tools-and-plugins-configuration)
+- [6. Tools and Plugins Configuration](#6-tools-and-plugins-configuration)
 - [7. Kubernetes Configuration](#7-kubernetes-configuration)
 - [8. Helm Charts](#8-helm-charts)
 - [9. MySQL Deployment](#9-mysql-deployment)
@@ -288,6 +288,7 @@ sudo tail -f /var/log/jenkins/jenkins.log
 curl -v http://<sonar-ip>:9000
 ```
 ---
+
 ## 6. Tools and Plugins Configuration
 ### Essential Jenkins Plugins
 1. **Pipeline and SCM**
