@@ -338,30 +338,53 @@ After restart, verify in Manage Jenkins → Plugins → Installed plugins that a
 ## 7. Kubernetes Configuration
 ### Create ConfigMap
 ```yaml
-# petclinic-config.yaml
+# app-config.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: petclinic-config
+  name: app-config
+  namespace: petclinic-dev
 data:
-  application.properties: |
-    spring.profiles.active=mysql
-    spring.datasource.url=jdbc:mysql://mysql:3306/petclinic
-    spring.datasource.initialization-mode=always
+  MYSQL_DATABASE: petclinic
+  MYSQL_URL: jdbc:mysql://mysql-service:3306/petclinic
 ```
 
 ### Create Secrets
 ```yaml
-# petclinic-secrets.yaml
+# db-secrets.yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: mysql-credentials
+  name: db-secrets
+  namespace: petclinic-dev
 type: Opaque
 data:
-  username: cGV0Y2xpbmlj
-  password: cGV0Y2xpbmljX3Bhc3N3b3Jk
+  MYSQL_USER: cGV0Y2xpbmlj          # Base64 encoded value for 'petclinic'
+  MYSQL_PASSWORD: cGV0Y2xpbmlj      # Base64 encoded value for 'petclinic'
+  MYSQL_ROOT_PASSWORD: cm9vdA==     # Base64 encoded value for 'root'
 ```
+
+### Create PersistentVolume(PV)
+```yaml
+# mysql-pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv
+spec:
+  capacity:
+    storage: 8Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  awsElasticBlockStore:
+    volumeID: vol-00ad22c086bb5817f
+    fsType: ext4
+```
+**Note:**
+### Guide: Setting Up EBS Volumes for Kubernetes PersistentVolumes
+[EBS Volume Setup Guide](https://github.com/SubbuTechOps/storages-guide/blob/main/EBS/ebs-pv-guide.md)
 ---
 
 ## 8. Helm Charts
