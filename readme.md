@@ -239,16 +239,14 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    def scannerHome = tool 'SonarScanner'
                     withSonarQubeEnv('SonarQube') {
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner \
-                            -Dsonar.projectKey=${SONARQUBE_PROJECT_KEY} \
-                            -Dsonar.sources=. \
-                            -Dsonar.host.url=${SONARQUBE_HOST_URL} \
-                            -Dsonar.login=${SONARQUBE_TOKEN}
-                        """
-                    }
+                       sh """
+                       mvn sonar:sonar \
+                       -Dsonar.projectKey=${SONARQUBE_PROJECT_KEY} \
+                       -Dsonar.host.url=${SONARQUBE_HOST_URL} \
+                       -Dsonar.login=${SONARQUBE_TOKEN}
+                       """
+                   }
                 }
             }
         }
