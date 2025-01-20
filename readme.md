@@ -422,21 +422,27 @@ petclinic-chart/
 ---
 
 ## 10. Post-deployment Verification
+
+📋 Deployment Resources
+🔍 Post-deployment Verification - Complete verification steps and checks after deployment:
+
+* 🔍 [Post-deployment Verification](https://github.com/SubbuTechOps/spring-petclinic/blob/develop/documentation/deployment-verification.md) - Complete verification steps and checks after deployment
+
 ```bash
 # Check deployment status
-kubectl get deployments -n petclinic
+kubectl get deployments -n petclinic-dev
 
 # Check pods
-kubectl get pods -n petclinic
+kubectl get pods -n petclinic-dev
 
 # Check services
-kubectl get svc -n petclinic
+kubectl get svc -n petclinic-dev
 
 # View logs
-kubectl logs -f deployment/petclinic -n petclinic
+kubectl logs -f deployment/petclinic -n petclinic-dev
 
 # Test the application
-curl http://$(kubectl get svc petclinic -n petclinic -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):8080
+curl http://$(kubectl get svc petclinic -n petclinic-dev -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'):8080
 ```
 
 ---
@@ -458,14 +464,11 @@ curl http://$(kubectl get svc petclinic -n petclinic -o jsonpath='{.status.loadB
    ```
 
 3. **Kubernetes Deployment Issues**
-   - Issue: Pods not starting
-   - Solution: Check pod events and logs
-   ```bash
-   kubectl describe pod <pod-name> -n petclinic
-   kubectl logs <pod-name> -n petclinic
+   🛠️ Kubernetes Troubleshooting Guide - Common issues and solutions for Kubernetes deployments:
+   * 🛠️ [Kubernetes Troubleshooting Guide](https://github.com/SubbuTechOps/spring-petclinic/blob/develop/documentation/k8s-troubleshooting-guide.md) - Common issues and solutions for Kubernetes deployments
    ```
 
-4. **Database Connection Issues**
+5. **Database Connection Issues**
    - Issue: Application can't connect to MySQL
    - Solution: Verify MySQL service and credentials
    ```bash
