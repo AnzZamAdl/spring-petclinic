@@ -87,7 +87,7 @@ This guide includes:
 ## 3. Jenkins Installation
 ### Jenkins Server Installation Script
 
-📚 [Download Jenkins Installation Script](https://drive.google.com/file/d/1wxs6RNi8qInij8WUtwIUzYETtCaDAtfE/view?usp=sharing)
+📚 [Download Jenkins Installation Script](https://drive.google.com/file/d/1EaCjMOGxDJN2T7qlikMBLo7SgOH8_aao/view?usp=sharing)
 
 This shell script automates the installation and configuration of Jenkins server and required tools.
 
