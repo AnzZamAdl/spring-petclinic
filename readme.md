@@ -156,7 +156,7 @@ kubectl get ns
 ## 5. SonarQube Server Installation
 ### SonarQube Server Installation Script
 
-📚 [Download SonarQube Installation Script](https://drive.google.com/file/d/1pl3PxQx9urAapolsf5KM94JoYVMInBE2/view?usp=sharing)
+📚 [Download SonarQube Installation Script](https://drive.google.com/file/d/1h0sIDq4JRWT_s_Y0nAyXu_NRYPN64TEz/view?usp=sharing)
 
 This shell script automates the installation and configuration of SonarQube server.
 
