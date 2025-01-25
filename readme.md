@@ -71,6 +71,7 @@ This document provides access to the comprehensive guide for setting up an Amazo
 ## Guide Access
 
 📚 [EKS Cluster Setup Guide](https://drive.google.com/file/d/1mouXxkZ6kYjeL5KtRJp9BK6SLNTZOYEr/view?usp=sharing)
+📚 [EKS Cluster Setup Steps](https://drive.google.com/file/d/1oy2lomaP0xzJndwZ7c22jW-wY-fYvXzH/view?usp=sharing)
 
 ## Contents Overview
 
