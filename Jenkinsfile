@@ -11,13 +11,13 @@ pipeline {
         GIT_BRANCH = 'develop'
         GIT_CREDENTIALS_ID = 'github-pat'
 
-        SONARQUBE_HOST_URL = 'http://3.92.82.78:9000/'
+        SONARQUBE_HOST_URL = 'http://13.201.52.196:9000/'
         SONARQUBE_PROJECT_KEY = 'PetClinic'
         SONARQUBE_TOKEN = credentials('sonar-credentials')
 
         AWS_ACCOUNT_ID = '017820683847'
         ECR_REPO_URL = '017820683847.dkr.ecr.us-east-1.amazonaws.com/petclinic-dev'
-        AWS_REGION = 'us-east-1'
+        AWS_REGION = 'ap-south-1'
 
         EKS_CLUSTER_NAME = 'demo-cluster'
         HELM_RELEASE_NAME = 'petclinic'
@@ -60,7 +60,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') {
+                withSonarQubeEnv('sonar-server') {
                     sh """
                     mvn sonar:sonar \
                     -Dsonar.projectKey=${SONARQUBE_PROJECT_KEY} \
@@ -80,7 +80,7 @@ pipeline {
 
                     sh """
                     docker build -t ${DOCKER_IMAGE} .
-                    aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URL}
+                    aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ECR_REPO_URL}
                     docker push ${DOCKER_IMAGE}
                     """
                 }
