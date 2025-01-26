@@ -74,6 +74,7 @@ This document provides access to the comprehensive guide for setting up an Amazo
 
 📚 [EKS Cluster Setup Steps](https://drive.google.com/file/d/1oy2lomaP0xzJndwZ7c22jW-wY-fYvXzH/view?usp=sharing)
 
+
 ## Contents Overview
 
 This guide includes:
@@ -426,6 +427,7 @@ petclinic-chart/
 ## 10. Post-deployment Verification
 
 📋 Deployment Resources:
+📚 [Project Demo Steps](https://drive.google.com/file/d/1GJEd-lo7VFbz8S4pbxo3MzkVgU467xpx/view?usp=sharing)
 
 * 🔍 [Post-deployment Verification](https://github.com/SubbuTechOps/spring-petclinic/blob/develop/documentation/deployment-verification.md) - Complete verification steps and checks after deployment
 
