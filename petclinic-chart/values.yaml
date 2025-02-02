@@ -16,7 +16,7 @@ mysql:
   # The zone affinity is hardcoded in the deployment template to us-east-1b
 app:
   image:
-    repository: 017820683847.dkr.ecr.us-east-1.amazonaws.com/petclinic-dev
+    repository: 746669237956.dkr.ecr.ap-south-1.amazonaws.com/petclinic-dev
     tag: 395b703-18
   replicas: 2
   service:
